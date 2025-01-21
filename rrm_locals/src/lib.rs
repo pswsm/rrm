@@ -88,15 +88,8 @@ impl Deref for GameMods {
     }
 }
 
-impl From<&str> for GameMods {
-    fn from(path: &str) -> Self {
-        let game_path: GamePath = GamePath::from(path);
-        GameMods::from(game_path)
-    }
-}
-
-impl From<GamePath> for GameMods {
-    fn from(path: GamePath) -> Self {
+impl From<&GamePath> for GameMods {
+    fn from(path: &GamePath) -> Self {
         let (mods, biggest) = mods_at(&path.path().join("Mods")).parse();
 
         GameMods {

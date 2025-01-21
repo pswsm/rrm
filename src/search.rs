@@ -6,8 +6,8 @@ use crate::utils::*;
 macro_rules! display_search {
     ($m: expr, $args: expr, $i: expr) => {
         if !$m.is_empty() {
-            if $args.display.pager || $i.use_more && !$args.display.no_pager {
-                $m.more_display(&$i.with_paging)
+            if $args.display.pager || $i.use_pager && !$args.display.no_pager {
+                $m.more_display(&$i.with_pager)
             } else {
                 $m.display()
             }
@@ -17,15 +17,15 @@ macro_rules! display_search {
     };
 }
 
-pub fn search_locally(i: Installer, args: Local) {
+pub fn search_locally(installer: Installer, args: Local) {
     use rrm_locals::Filtrable;
 
     let d_type = rrm_locals::DisplayType::from(args.display.large);
-    let mods = GameMods::from(i.rim_install.unwrap()).with_display(d_type);
+    let mods = GameMods::from(&installer.rimworld_path).with_display(d_type);
 
     let filtered = mods.filter_by(args.to_filter_obj(), &args.string);
 
-    display_search!(filtered, args, i);
+    display_search!(filtered, args, installer);
 }
 
 pub async fn search_steam(i: Installer, args: Steam) {

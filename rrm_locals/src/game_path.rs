@@ -1,60 +1,54 @@
 use serde::{Deserialize, Serialize};
-use std::path::{Path, PathBuf};
-use std::process::exit;
+use std::path::PathBuf;
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
-pub struct GamePath(Box<Path>);
+pub struct GamePath(PathBuf);
 
 impl GamePath {
-    fn create(path: &Path) -> Self {
-        let has_mods_dir = path
-            .read_dir()
-            .unwrap_or_else(|_| {
-                eprintln!("Failed to read contents inside {}", path.display());
-                exit(1);
-            })
-            .any(|path| {
-                path.as_ref().unwrap().file_name() == "Mods" && path.unwrap().path().is_dir()
-            });
+    pub fn new() -> Self {
+        Self(PathBuf::new())
+    }
 
-        if path.exists() && has_mods_dir {
-            GamePath(Box::from(path))
-        } else if !path.exists() {
-            eprintln!("The path does not exist. Make sure you input a valid one.");
-            exit(1);
-        } else if !has_mods_dir {
-            eprintln!("Failed to read contents inside {}", path.display());
-            exit(1);
-        } else {
-            eprintln!(
-                "Unknown error when trying to create GamePath with path: {}",
-                path.display()
-            );
-            exit(1);
-        }
+    fn create(path: &PathBuf) -> Result<Self, String> {
+        let expanded_path: PathBuf = match path.starts_with("~") {
+            true => path
+                .display()
+                .to_string()
+                .replacen("~", &std::env::var("HOME").unwrap(), 1)
+                .into(),
+            false => path.to_owned(),
+        };
+
+        if !expanded_path.is_dir() {
+            return Err(format!(
+                "Path \"{}\" does not exist",
+                expanded_path.display()
+            ));
+        };
+
+        Ok(GamePath(expanded_path))
+    }
+
+    pub fn get_mod_path(&self) -> PathBuf {
+        self.0.join("game/Mods")
     }
 }
 
-impl From<&str> for GamePath {
-    fn from(path: &str) -> Self {
-        GamePath::create(Path::new(path))
-    }
-}
-
-impl From<&Path> for GamePath {
-    fn from(path: &Path) -> Self {
-        GamePath::create(path)
+impl TryFrom<PathBuf> for GamePath {
+    type Error = String;
+    fn try_from(path: PathBuf) -> Result<Self, Self::Error> {
+        GamePath::create(&path)
     }
 }
 
 impl GamePath {
-    pub fn path(&self) -> &Path {
+    pub fn path(&self) -> &PathBuf {
         &self.0
     }
 }
 
-impl From<&PathBuf> for GamePath {
-    fn from(path: &PathBuf) -> Self {
-        GamePath::create(path.as_path())
+impl std::fmt::Display for GamePath {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.0.display())
     }
 }

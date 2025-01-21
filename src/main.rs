@@ -2,6 +2,7 @@ extern crate core;
 
 use crate::args::Options;
 use clap::CommandFactory;
+use rrm_locals::GamePath;
 use std::{collections::HashSet, process::ExitCode};
 
 mod args;
@@ -10,6 +11,7 @@ mod install;
 mod list;
 mod logger;
 mod pull;
+mod rimworldmod;
 mod search;
 mod utils;
 use clap_complete::{Shell, generate};
@@ -31,14 +33,20 @@ fn main() -> ExitCode {
 
 #[tokio::main]
 async fn app() -> Result<(), ExitCode> {
+    println!("Welcome!!!");
     let args: args::App = args::App::load();
 
-    let mut installer = utils::try_get_path(
-        None,
-        matches!(&args.command, args::Commands::Set {
-            command: Options::GamePath { .. }
-        }),
-    );
+    println!("Args loaded...");
+
+    let installer = match rrm_installer::Installer::try_from_config() {
+        Ok(installer) => installer,
+        Err(reason) => {
+            log!(Error: reason);
+            std::process::exit(1)
+        }
+    };
+
+    println!("Installer created OK");
 
     match args.command {
         args::Commands::Completions { shell } => {
@@ -61,17 +69,24 @@ async fn app() -> Result<(), ExitCode> {
 
         args::Commands::Set { command } => match command {
             Options::UsePager { value } => {
-                installer.set_more_value(value == "true" || value == "1");
+                match value {
+                    true => installer.enable_pager(),
+                    false => installer.disable_pager(),
+                };
                 Ok(())
             }
 
             Options::GamePath { value } => {
-                installer.set_path_value(value);
+                let gp = match GamePath::try_from(value) {
+                    Ok(gp) => gp,
+                    Err(_e) => return Err(ExitCode::FAILURE),
+                };
+                installer.with_rimworld_path(gp);
                 Ok(())
             }
 
             Options::Pager { value } => {
-                installer.set_paging_software(value.to_str().unwrap());
+                installer.with_pager(format!("{}", value.display()));
                 Ok(())
             }
         },

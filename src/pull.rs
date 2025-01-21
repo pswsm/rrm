@@ -5,8 +5,7 @@ use crate::utils::*;
 use std::collections::HashSet;
 
 pub async fn pull(args: Pull, i: Installer, ignored: bool) {
-    let mods: GameMods =
-        GameMods::from(i.rim_install.clone().unwrap()).with_display(DisplayType::Short);
+    let mods: GameMods = GameMods::from(&i.rimworld_path).with_display(DisplayType::Short);
 
     if args.is_verbose() {
         println!("Listing installed ids: ");

@@ -275,7 +275,7 @@ pub async fn install(
         }
     }
 
-    let rim_install = i.rim_install.as_ref().unwrap();
+    let rim_install = &i.rimworld_path;
 
     let mut dependencies_ids = RefCell::new(HashSet::new());
 
@@ -295,8 +295,7 @@ pub async fn install(
             ..Default::default()
         };
 
-        let installed_mods =
-            GameMods::from(rim_install.path().to_str().unwrap()).with_display(DisplayType::Short);
+        let installed_mods = GameMods::from(rim_install).with_display(DisplayType::Short);
         let filtered = installed_mods.filter_by(FlagSet::from(FilterBy::SteamID), id);
 
         let mut ignored = false;
@@ -329,15 +328,14 @@ pub async fn install(
 
         dir::move_dir(&id_download_path, &destination, &options).unwrap();
 
-        let installed_mods =
-            GameMods::from(rim_install.path().to_str().unwrap()).with_display(DisplayType::Short);
+        let installed_mods = GameMods::from(rim_install).with_display(DisplayType::Short);
         let filtered = installed_mods.filter_by(FlagSet::from(FilterBy::SteamID), id);
 
         already_installed.insert(id);
 
         match filtered.mods.len() {
             1 => {
-                let m: Mod = filtered.mods[0].clone(); // Get the installed mod as Mod instance (read its dependencies)
+                let m: rrm_locals::Mod = filtered.mods[0].clone(); // Get the installed mod as Mod instance (read its dependencies)
 
                 // If it does have dependencies
                 if let Some(dependencies) = m.dependencies {
