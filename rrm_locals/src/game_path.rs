@@ -4,6 +4,12 @@ use std::path::PathBuf;
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct GamePath(PathBuf);
 
+impl Default for GamePath {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl GamePath {
     pub fn new() -> Self {
         Self(PathBuf::new())

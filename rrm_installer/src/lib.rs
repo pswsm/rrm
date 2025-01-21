@@ -123,15 +123,15 @@ impl Installer {
 
     fn get_config_path() -> PathBuf {
         let config_dir = match std::env::var("XDG_CONFIG_HOME") {
-            Err(_) => PathBuf::new().join("/etc/rrm"),
-            Ok(shtr) => PathBuf::new().join(shtr),
+            Err(_) => PathBuf::from("/etc/rrm"),
+            Ok(shtr) => PathBuf::from(shtr),
         };
         config_dir.join("rrm")
     }
 
     fn get_config_file() -> Result<std::fs::File, String> {
         let config_path: PathBuf = Self::get_config_path();
-        match std::fs::File::open(&config_path.join(CONFIG_FILE_NAME)) {
+        match std::fs::File::open(config_path.join(CONFIG_FILE_NAME)) {
             Ok(file) => Ok(file),
             Err(_reason) => Ok(Self::create_config_file()?),
         }
